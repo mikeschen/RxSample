@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.EditText;
 
 import java.util.regex.Pattern;
@@ -41,5 +42,11 @@ public class MainActivity extends AppCompatActivity {
                 .subscribe( color -> emailEdit.setTextColor(color));
         userNameValid.map(b -> b ? Color.BLACK : Color.RED)
                 .subscribe( color -> unameEdit.setTextColor(color));
+
+        Button registerButton = (Button) findViewById(R.id.btnRegister);
+
+        Observable<Boolean> registerEnabled =
+                Observable.combineLatest(userNameValid, emailValid, (a,b) -> a && b);
+        registerEnabled.subscribe( enabled -> registerButton.setEnabled(enabled));
     }
 }
