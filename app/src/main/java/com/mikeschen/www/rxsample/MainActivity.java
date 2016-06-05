@@ -1,9 +1,12 @@
 package com.mikeschen.www.rxsample;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
+
+import java.util.regex.Pattern;
 
 import rx.Observable;
 import rx.android.widget.OnTextChangeEvent;
@@ -20,9 +23,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        Observable<OnTextChangeEvent> userNameText =
-                WidgetObservable.text((EditText) findViewById(R.id.edtUserName));
+        final Pattern emailPattern = Pattern.compile(
+                "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                        + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$");
 
-        userNameText.filter( e -> e.text().length() > 4).subscribe( e -> Log.d("[Rx]", e.text().toString()));
+        EditText unameEdit = (EditText)findViewById(R.id.edtUserName);
+        EditText emailEdit = (EditText)findViewById(R.id.edtEmail);
+
+        Observable<Boolean> userNameValid = WidgetObservable.text(unameEdit)
+                .map(e -> e.text())
+                .map(t -> t.length() > 4);
+        Observable<Boolean> emailValid = WidgetObservable.text(emailEdit)
+                .map(e -> e.text())
+                .map(t -> emailPattern.matcher(t).matches());
+
+        emailValid.map(b -> b ? Color.BLACK : Color.RED)
+                .subscribe( color -> emailEdit.setTextColor(color));
+        userNameValid.map(b -> b ? Color.BLACK : Color.RED)
+                .subscribe( color -> unameEdit.setTextColor(color));
     }
 }
