@@ -23,6 +23,6 @@ public class MainActivity extends AppCompatActivity {
         Observable<OnTextChangeEvent> userNameText =
                 WidgetObservable.text((EditText) findViewById(R.id.edtUserName));
 
-        userNameText.subscribe( e -> Log.d("[Rx]", e.text().toString()));
+        userNameText.filter( e -> e.text().length() > 4).subscribe( e -> Log.d("[Rx]", e.text().toString()));
     }
 }
