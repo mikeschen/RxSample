@@ -1,19 +1,21 @@
 package com.mikeschen.www.rxsample;
 
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.jakewharton.rxbinding.widget.RxTextView;
 
 import java.util.regex.Pattern;
 
 import rx.Observable;
-import rx.android.widget.OnTextChangeEvent;
-import rx.android.widget.WidgetObservable;
+import rx.subscriptions.CompositeSubscription;
 
 public class MainActivity extends AppCompatActivity {
+
+    private CompositeSubscription compositeSubs = new CompositeSubscription();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,23 +32,32 @@ public class MainActivity extends AppCompatActivity {
 
         EditText unameEdit = (EditText)findViewById(R.id.edtUserName);
         EditText emailEdit = (EditText)findViewById(R.id.edtEmail);
+        Button registerButton = (Button) findViewById(R.id.btnRegister);
 
-        Observable<Boolean> userNameValid = WidgetObservable.text(unameEdit)
-                .map(e -> e.text())
+        Observable<Boolean> userNameValid = RxTextView.textChanges(unameEdit)
                 .map(t -> t.length() > 4);
-        Observable<Boolean> emailValid = WidgetObservable.text(emailEdit)
-                .map(e -> e.text())
+
+        Observable<Boolean> emailValid = RxTextView.textChanges(emailEdit)
                 .map(t -> emailPattern.matcher(t).matches());
 
-        emailValid.map(b -> b ? Color.BLACK : Color.RED)
-                .subscribe( color -> emailEdit.setTextColor(color));
-        userNameValid.map(b -> b ? Color.BLACK : Color.RED)
-                .subscribe( color -> unameEdit.setTextColor(color));
+        compositeSubs.add(userNameValid.distinctUntilChanged()
+                .map(b -> b ? Color.BLACK : Color.RED)
+                .subscribe(c -> unameEdit.setTextColor(c)));
 
-        Button registerButton = (Button) findViewById(R.id.btnRegister);
+        compositeSubs.add(emailValid.distinctUntilChanged()
+                .map(b -> b ? Color.BLACK : Color.RED)
+                .subscribe(color -> emailEdit.setTextColor(color)));
 
         Observable<Boolean> registerEnabled =
                 Observable.combineLatest(userNameValid, emailValid, (a,b) -> a && b);
-        registerEnabled.subscribe( enabled -> registerButton.setEnabled(enabled));
+
+        compositeSubs.add(registerEnabled.distinctUntilChanged()
+                .subscribe( enabled -> registerButton.setEnabled(enabled)));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeSubs.unsubscribe();
     }
 }
