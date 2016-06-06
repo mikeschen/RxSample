@@ -3,6 +3,7 @@ package com.mikeschen.www.rxsample;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -41,10 +42,12 @@ public class MainActivity extends AppCompatActivity {
                 .map(t -> emailPattern.matcher(t).matches());
 
         compositeSubs.add(userNameValid.distinctUntilChanged()
+                .doOnNext( b -> Log.d("[Rx]", "UserName " + (b ? "Valid" : "Invalid")))
                 .map(b -> b ? Color.BLACK : Color.RED)
                 .subscribe(c -> unameEdit.setTextColor(c)));
 
         compositeSubs.add(emailValid.distinctUntilChanged()
+                .doOnNext( b -> Log.d("[Rx]", "Email " + (b ? "Valid" : "Invalid")))
                 .map(b -> b ? Color.BLACK : Color.RED)
                 .subscribe(color -> emailEdit.setTextColor(color)));
 
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
                 Observable.combineLatest(userNameValid, emailValid, (a,b) -> a && b);
 
         compositeSubs.add(registerEnabled.distinctUntilChanged()
+                .doOnNext( b -> Log.d("[Rx]", "Button Active " + (b ? "Valid" : "Invalid")))
                 .subscribe( enabled -> registerButton.setEnabled(enabled)));
     }
 
